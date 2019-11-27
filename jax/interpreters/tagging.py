@@ -140,21 +140,18 @@ class TagTracer(core.Tracer):
       return self
 
 
-@transformation_with_aux
-def tag_subtrace(parent, in_paths, in_tree, in_vals):
+@transformation
+def tag_subtrace(parent, scope, in_tree, in_vals):
   trace = parent.with_sublevel(core.cur_sublevel())
   trace.tree = in_tree
-  in_tracers = map(partial(TagTracer, trace), in_vals, in_paths)
-  outs = yield in_tracers, {}
-  out_tracers = map(trace.full_raise, outs)
-  out_vals, out_paths = unzip2((t.val, t.path) for t in out_tracers)
+  out_vals = yield (TagTracer(trace, scope), *in_vals), {}
   out_tree = trace.tree
-  yield (out_vals, out_tree), out_paths
+  yield out_vals, out_tree
 
-def tag_fun(fun, in_vals, in_paths, accum_fn, in_tree):
+def tag_fun(fun, in_vals, scope, accum_fn, in_tree): # reorder
   with core.new_master(TagTrace) as master:
     trace = TagTrace(master, core.cur_sublevel(), accum_fn)
-    f_tag, out_paths = tag_subtrace(fun, trace, in_paths)
+    f_tag = tag_subtrace(fun, trace, scope)
     all_args, in_treedef = tree_flatten((in_tree, in_vals))
     f_tag_flat, out_treedef = flatten_fun_nokwargs(f_tag, in_treedef)
     out_flat = f_tag_flat.call_wrapped(*all_args)

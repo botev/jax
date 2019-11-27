@@ -4005,17 +4005,16 @@ ad.deflinear(tie_in_p, _tie_in_transpose_rule)
 batching.primitive_batchers[tie_in_p] = _tie_in_batch_rule
 masking.shape_rules[tie_in_p] = lambda shape_exprs: shape_exprs[1]
 masking.masking_rules[tie_in_p] = lambda vals, logical_shapes: vals[1]
-tagging.custom_tagging_rules[tie_in_p] = _tie_in_tagging_rule
 
 
-def _push_tag_tagging_rule(args, paths, **params):
-  out = push_tag_p.bind(*args, **params)
+def _push_scope_tagging_rule(args, paths, **params):
+  out = push_scope_p.bind(*args, **params)
   out_path = paths[0] + (params["name"],)
   return out, out_path, False
 
-push_tag_p = Primitive('push_tag')
-push_tag_p.def_impl(lambda x, name: x)
-push_tag_p.def_abstract_eval(lambda x, name: x)
+push_scope_p = Primitive('push_tag')
+push_scope_p.def_impl(lambda scope, name: scope)
+push_scope_p.def_abstract_eval(lambda x, name: x)
 xla.translations[push_tag_p] = lambda c, x, name: x
 ad.deflinear(push_tag_p, lambda t, name: [push_tag(t, name)])
 batching.primitive_batchers[push_tag_p] = \
